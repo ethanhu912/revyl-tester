@@ -59,7 +59,8 @@ def _run_exploration(
         }
     ]
 
-    while True:
+    max_iterations = 20
+    for _ in range(max_iterations):
         if stop_event.is_set():
             break
 
@@ -122,7 +123,10 @@ async def explore_app(app_name: str) -> AsyncGenerator[dict, None]:
 
     def run_in_thread():
         try:
-            with DeviceClient.start(platform="ios") as device:
+            app_id = os.getenv("APP_ID")
+            print(f"[debug] Starting DeviceClient with app_id={app_id}")
+            with DeviceClient.start(platform="android", app_id=app_id, ready_timeout=120) as device:
+                print("[debug] Device ready, starting exploration")
                 _run_exploration(device, app_name, queue, loop, stop_event)
         except Exception as e:
             loop.call_soon_threadsafe(queue.put_nowait, {"error": str(e)})
